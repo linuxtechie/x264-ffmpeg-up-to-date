@@ -50,11 +50,11 @@
 #VARIABLES
 # edit the below if you wish
 #location of installed files
-INSTALL="/usr/local/src"
+INSTALL="/home/linuxtechie/x264-ffmpeg-up-to-date/install1"
 # location of log file
-LOG="/var/log/ffmpegupdate.log"
+LOG="${INSTALL}/ffmpegupdate.log"
 # location of the script's lock file
-LOCK="/var/run/ffmpegupdate.pid"
+LOCK="${INSTALL}/ffmpegupdate.pid"
 #update the script automatically?, change to NO if you don't want the scrip to update itself automatically
 SCRIPTUPDATE="YES"
 #FFmpeg additional configure options - think about the dependency issues here
@@ -65,16 +65,26 @@ X264CONFIGURE=
 #####################################
 #DONT EDIT ANYTHING BEYOND THIS POINT
 SCRIPT="ffmpegupdate.sh"
-CONF="/etc/ffmpegupdate.conf"
-VERSION=10
+CONF="${INSTALL}/ffmpegupdate.conf"
+VERSION=9
+
+
+my_apt_get(){
+if [ "$(id -u)" != "0" ]; then
+  sudo apt-get $*
+else
+  apt-get $*
+fi
+}
+
 
 #PRECISE SPECIFIC
 #precise install
 precise_dep ()
 {
-apt-get -y remove ffmpeg x264 libx264-dev 2>> $LOG >> $LOG
-apt-get -y update 2>> $LOG >> $LOG
-apt-get -y install build-essential checkinstall git libfaac-dev libjack-jackd2-dev libmp3lame-dev libopencore-amrnb-dev libopencore-amrwb-dev libsdl1.2-dev libtheora-dev libva-dev libvdpau-dev libvorbis-dev libx11-dev libxfixes-dev texi2html yasm zlib1g-dev 2>> $LOG >> $LOG
+my_apt_get -y remove ffmpeg x264 libx264-dev 2>> $LOG >> $LOG
+my_apt_get -y update 2>> $LOG >> $LOG
+my_apt_get -y install build-essential checkinstall git libfaac-dev libjack-jackd2-dev libmp3lame-dev libopencore-amrnb-dev libopencore-amrwb-dev libsdl1.2-dev libtheora-dev libva-dev libvdpau-dev libvorbis-dev libx11-dev libxfixes-dev texi2html yasm zlib1g-dev 2>> $LOG >> $LOG
 }
 
 precise_x264 ()
@@ -84,7 +94,9 @@ git clone git://git.videolan.org/x264 2>> $LOG >> $LOG
 cd x264 2>> $LOG >> $LOG
 ./configure --enable-static $X264CONFIGURE 2>> $LOG >> $LOG
 make -j $NO_OF_CPUCORES 2>> $LOG >> $LOG
+if [ "$(id -u)" == "0" ]; then
 checkinstall --pkgname=x264 --pkgversion=""3:$(./version.sh | awk -F'[" ]' '/POINT/{print $4"+git"$5}')"" --backup=no --deldoc=yes --fstrans=no --default 2>> $LOG >> $LOG
+fi
 }
 
 precise_ffmpeg ()
@@ -94,24 +106,26 @@ git clone --depth 1 git://source.ffmpeg.org/ffmpeg 2>> $LOG >> $LOG
 cd ffmpeg 2>> $LOG >> $LOG
 ./configure --enable-gpl --enable-libfaac --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libtheora --enable-libvorbis --enable-libx264 --enable-nonfree --enable-version3 --enable-x11grab $FFMPEGCONFIGURE 2>> $LOG >> $LOG
 make -j $NO_OF_CPUCORES 2>> $LOG >> $LOG
+if [ "$(id -u)" == "0" ]; then
 checkinstall --pkgname=ffmpeg --pkgversion="5:$(date +%Y%m%d%H%M)-git" --backup=no --deldoc=yes --fstrans=no --default 2>> $LOG >> $LOG
+fi 
 hash x264 ffmpeg ffplay ffprobe 2>> $LOG >> $LOG
 }
 
 #precise update
 precise_x264depup ()
 {
-apt-get -y remove x264 libx264-dev 2>> $LOG >> $LOG
-apt-get -y update 2>> $LOG >> $LOG
-apt-get -y install build-essential checkinstall git libfaac-dev libjack-jackd2-dev libmp3lame-dev libopencore-amrnb-dev libopencore-amrwb-dev libsdl1.2-dev libtheora-dev libva-dev libvdpau-dev libvorbis-dev libx11-dev libxfixes-dev libxvidcore-dev texi2html yasm zlib1g-dev 2>> $LOG >> $LOG
+my_apt_get -y remove x264 libx264-dev 2>> $LOG >> $LOG
+my_apt_get -y update 2>> $LOG >> $LOG
+my_apt_get -y install build-essential checkinstall git libfaac-dev libjack-jackd2-dev libmp3lame-dev libopencore-amrnb-dev libopencore-amrwb-dev libsdl1.2-dev libtheora-dev libva-dev libvdpau-dev libvorbis-dev libx11-dev libxfixes-dev libxvidcore-dev texi2html yasm zlib1g-dev 2>> $LOG >> $LOG
 
 }
 
 precise_ffmpegdepup ()
 {
-apt-get -y remove ffmpeg 2>> $LOG >> $LOG
-apt-get -y update 2>> $LOG >> $LOG
-apt-get -y install build-essential checkinstall git libfaac-dev libjack-jackd2-dev libmp3lame-dev libopencore-amrnb-dev libopencore-amrwb-dev libsdl1.2-dev libtheora-dev libva-dev libvdpau-dev libvorbis-dev libx11-dev libxfixes-dev libxvidcore-dev texi2html yasm zlib1g-dev 2>> $LOG >> $LOG
+my_apt_get -y remove ffmpeg 2>> $LOG >> $LOG
+my_apt_get -y update 2>> $LOG >> $LOG
+my_apt_get -y install build-essential checkinstall git libfaac-dev libjack-jackd2-dev libmp3lame-dev libopencore-amrnb-dev libopencore-amrwb-dev libsdl1.2-dev libtheora-dev libva-dev libvdpau-dev libvorbis-dev libx11-dev libxfixes-dev libxvidcore-dev texi2html yasm zlib1g-dev 2>> $LOG >> $LOG
 
 }
 
@@ -122,7 +136,9 @@ make distclean 2>> $LOG >> $LOG
 git pull 2>> $LOG >> $LOG
 ./configure --enable-static $X264CONFIGURE 2>> $LOG >> $LOG
 make -j $NO_OF_CPUCORES 2>> $LOG >> $LOG
+if [ "$(id -u)" == "0" ]; then
 checkinstall  --pkgname=x264 --pkgversion=""3:$(./version.sh | awk -F'[" ]' '/POINT/{print $4"+git"$5}')"" --backup=no --deldoc=yes --fstrans=no --default2>> $LOG >> $LOG
+fi
 }
 
 precise_ffmpegupdate ()
@@ -132,7 +148,9 @@ make distclean 2>> $LOG >> $LOG
 git pull 2>> $LOG >> $LOG
 ./configure --enable-gpl --enable-libfaac --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libtheora --enable-libvorbis --enable-libx264 --enable-nonfree --enable-version3 --enable-x11grab $FFMPEGCONFIGURE 2>> $LOG >> $LOG
 make -j $NO_OF_CPUCORES 2>> $LOG >> $LOG
+if [ "$(id -u)" == "0" ]; then
 checkinstall --pkgname=ffmpeg --pkgversion="5:$(date +%Y%m%d%H%M)-git" --backup=no --deldoc=yes --fstrans=no --default 2>> $LOG >> $LOG
+fi
 hash x264 ffmpeg ffplay ffprobe 2>> $LOG >> $LOG
 }
 
@@ -663,8 +681,7 @@ fi
 
 #this script must be run as root, so lets check that
 if [ "$(id -u)" != "0" ]; then
-   echo "Fail. This script must be run as root." 1>&2
-   exit 1
+   echo "Not installing as not root." 1>&2
 fi
 
 #check for the conf file and act accordingly 
