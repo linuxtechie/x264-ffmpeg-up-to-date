@@ -50,7 +50,7 @@
 #VARIABLES
 # edit the below if you wish
 #location of installed files
-INSTALL="/usr/local/src"
+INSTALL="/home/linuxtechie/x264-ffmpeg-up-to-date/install"
 # location of log file
 LOG="/var/log/ffmpegupdate.log"
 # location of the script's lock file
