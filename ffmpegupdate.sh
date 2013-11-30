@@ -68,6 +68,81 @@ SCRIPT="ffmpegupdate.sh"
 CONF="/etc/ffmpegupdate.conf"
 VERSION=10
 
+
+
+#RARING SPECIFIC
+#raring install
+raring_dep ()
+{
+apt-get -y remove ffmpeg x264 libx264-dev 2>> $LOG >> $LOG
+apt-get -y update 2>> $LOG >> $LOG
+apt-get -y install build-essential checkinstall git libfaac-dev libjack-jackd2-dev libmp3lame-dev libopencore-amrnb-dev libopencore-amrwb-dev libsdl1.2-dev libtheora-dev libva-dev libvdpau-dev libvorbis-dev libx11-dev libxfixes-dev texi2html yasm zlib1g-dev 2>> $LOG >> $LOG
+}
+
+raring_x264 ()
+{
+cd $INSTALL 2>> $LOG >> $LOG
+git clone git://git.videolan.org/x264 2>> $LOG >> $LOG
+cd x264 2>> $LOG >> $LOG
+./configure --enable-static --disable-opencl $X264CONFIGURE 2>> $LOG >> $LOG
+make -j $NO_OF_CPUCORES 2>> $LOG >> $LOG
+checkinstall --pkgname=x264 --pkgversion=""3:$(./version.sh | awk -F'[" ]' '/POINT/{print $4"+git"$5}')"" --backup=no --deldoc=yes --fstrans=no --default 2>> $LOG >> $LOG
+}
+
+raring_ffmpeg ()
+{
+cd $INSTALL 2>> $LOG >> $LOG
+git clone --depth 1 git://source.ffmpeg.org/ffmpeg 2>> $LOG >> $LOG
+cd ffmpeg 2>> $LOG >> $LOG
+./configure --enable-gpl --enable-libfaac --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libtheora --enable-libvorbis --enable-libx264 --enable-nonfree --enable-version3 --enable-x11grab $FFMPEGCONFIGURE 2>> $LOG >> $LOG
+make -j $NO_OF_CPUCORES 2>> $LOG >> $LOG
+checkinstall --pkgname=ffmpeg --pkgversion="5:$(date +%Y%m%d%H%M)-git" --backup=no --deldoc=yes --fstrans=no --default 2>> $LOG >> $LOG
+hash x264 ffmpeg ffplay ffprobe 2>> $LOG >> $LOG
+}
+
+#raring update
+raring_x264depup ()
+{
+apt-get -y remove x264 libx264-dev 2>> $LOG >> $LOG
+apt-get -y update 2>> $LOG >> $LOG
+apt-get -y install build-essential checkinstall git libfaac-dev libjack-jackd2-dev libmp3lame-dev libopencore-amrnb-dev libopencore-amrwb-dev libsdl1.2-dev libtheora-dev libva-dev libvdpau-dev libvorbis-dev libx11-dev libxfixes-dev libxvidcore-dev texi2html yasm zlib1g-dev 2>> $LOG >> $LOG
+
+}
+
+raring_ffmpegdepup ()
+{
+apt-get -y remove ffmpeg 2>> $LOG >> $LOG
+apt-get -y update 2>> $LOG >> $LOG
+apt-get -y install build-essential checkinstall git libfaac-dev libjack-jackd2-dev libmp3lame-dev libopencore-amrnb-dev libopencore-amrwb-dev libsdl1.2-dev libtheora-dev libva-dev libvdpau-dev libvorbis-dev libx11-dev libxfixes-dev libxvidcore-dev texi2html yasm zlib1g-dev 2>> $LOG >> $LOG
+
+}
+
+raring_x264update ()
+{
+cd $INSTALL/x264 2>> $LOG >> $LOG
+make distclean 2>> $LOG >> $LOG
+git pull 2>> $LOG >> $LOG
+./configure --enable-static $X264CONFIGURE 2>> $LOG >> $LOG
+make -j $NO_OF_CPUCORES 2>> $LOG >> $LOG
+checkinstall  --pkgname=x264 --pkgversion=""3:$(./version.sh | awk -F'[" ]' '/POINT/{print $4"+git"$5}')"" --backup=no --deldoc=yes --fstrans=no --default2>> $LOG >> $LOG
+}
+
+raring_ffmpegupdate ()
+{
+cd $INSTALL/ffmpeg 2>> $LOG >> $LOG
+make distclean 2>> $LOG >> $LOG
+git pull 2>> $LOG >> $LOG
+./configure --enable-gpl --enable-libfaac --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libtheora --enable-libvorbis --enable-libx264 --enable-nonfree --enable-version3 --enable-x11grab $FFMPEGCONFIGURE 2>> $LOG >> $LOG
+make -j $NO_OF_CPUCORES 2>> $LOG >> $LOG
+checkinstall --pkgname=ffmpeg --pkgversion="5:$(date +%Y%m%d%H%M)-git" --backup=no --deldoc=yes --fstrans=no --default 2>> $LOG >> $LOG
+hash x264 ffmpeg ffplay ffprobe 2>> $LOG >> $LOG
+}
+
+
+
+
+
+
 #PRECISE SPECIFIC
 #precise install
 precise_dep ()
@@ -435,7 +510,7 @@ echo
 
 #next, lets find out what version of Ubuntu we are running and check it
 DISTRO=( $(cat /etc/lsb-release | grep CODE | cut -c 18-) )
-OKDISTRO="maverick natty oneiric precise"
+OKDISTRO="maverick natty oneiric precise raring"
 
 if [[ ! $(grep $DISTRO <<< $OKDISTRO) ]]; then
   die "Exiting. Your distro is not supported, sorry.";
